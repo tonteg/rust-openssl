@@ -69,7 +69,8 @@ fn main() {
         .header("openssl/evp.h")
         .header("openssl/dsa.h")
         .header("openssl/rsa.h")
-        .header("openssl/x509_vfy.h");
+        .header("openssl/x509_vfy.h")
+        .header("openssl/ts.h");
 
     if let Some(version) = libressl_version {
         cfg.header("openssl/cms.h").header("openssl/poly1305.h");
