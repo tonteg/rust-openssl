@@ -24,6 +24,7 @@ pub enum ASN1_UNIVERSALSTRING {}
 pub enum ASN1_UTCTIME {}
 pub enum ASN1_VISIBLESTRING {}
 pub enum ASN1_UTF8STRING {}
+pub type ASN1_BOOLEAN = c_int;
 
 pub enum bio_st {} // FIXME remove
 cfg_if! {
