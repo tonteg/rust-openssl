@@ -2,6 +2,7 @@ use libc::*;
 
 use crate::X509_ALGOR;
 use crate::X509;
+use crate::X509_STORE;
 use crate::EVP_PKEY;
 use crate::EVP_MD;
 use crate::ASN1_INTEGER;
@@ -96,6 +97,11 @@ extern "C" {
         hexstr: *mut c_uchar,
         length: c_long,
     ) -> *mut c_uchar;
+    #[cfg(ossl110)]
+    pub fn TS_VERIFY_CTX_set_store(
+        ctx: *mut TS_VERIFY_CTX,
+        store: *mut X509_STORE,
+    ) -> *mut X509_STORE;
     pub fn TS_RESP_verify_response(ctx: *mut TS_VERIFY_CTX, response: *mut TS_RESP) -> c_int;
 
     pub fn TS_REQ_to_TS_VERIFY_CTX(req: *mut TS_REQ, ctx: *mut TS_VERIFY_CTX)

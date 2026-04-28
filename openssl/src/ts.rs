@@ -15,6 +15,7 @@ use crate::error::ErrorStack;
 use crate::hash::MessageDigest;
 use crate::pkey::{HasPrivate, PKeyRef};
 use crate::x509::{X509Algorithm, X509Ref};
+use crate::x509::store::X509Store;
 use crate::{cvt, cvt_p};
 
 foreign_type_and_impl_send_sync! {
@@ -253,6 +254,30 @@ impl TsVerifyContext {
                 ptr::null_mut(),
             ))?;
             Ok(TsVerifyContext::from_ptr(ctx))
+        }
+    }
+}
+
+impl TsVerifyContextRef {
+    /// Sets the X.509 certificate store used for signature verification.
+    ///
+    /// The context takes ownership of `store`. Any previously-set store is freed.
+    ///
+    /// Requires OpenSSL 1.1.0 or newer.
+    ///
+    /// This corresponds to `TS_VERIFY_CTX_set_store`.
+    #[cfg(ossl110)]
+    pub fn set_store(&mut self, store: X509Store) -> Result<(), ErrorStack> {
+        unsafe {
+            let raw = store.as_ptr();
+            // Transfer ownership to the TS_VERIFY_CTX; prevent X509Store from freeing it.
+            std::mem::forget(store);
+            let old = ffi::TS_VERIFY_CTX_set_store(self.as_ptr(), raw);
+            // Drop any previously-set store returned by the setter.
+            if !old.is_null() {
+                X509Store::from_ptr(old);
+            }
+            Ok(())
         }
     }
 }
