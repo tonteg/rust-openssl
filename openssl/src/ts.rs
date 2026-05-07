@@ -257,6 +257,30 @@ impl TsVerifyContext {
     }
 }
 
+impl TsVerifyContextRef {
+    /// Replaces the verify flags on this context.
+    ///
+    /// This corresponds to `TS_VERIFY_CTX_set_flags`.
+    ///
+    /// # Safety note
+    ///
+    /// Setting [`VerifyFlags::SIGNATURE`] (or any combined flag that includes
+    /// it, such as [`VerifyFlags::ALL_IMPRINT`] or [`VerifyFlags::ALL_DATA`])
+    /// without first configuring a trust store will cause a NULL-pointer
+    /// dereference inside OpenSSL when [`TsResp::verify`] is called. Until a
+    /// `set_store` wrapper is available in this crate, callers must not include
+    /// `SIGNATURE` in `flags`.
+    pub fn set_flags(&mut self, flags: VerifyFlags) -> Result<(), ErrorStack> {
+        unsafe {
+            cvt(ffi::TS_VERIFY_CTX_set_flags(
+                self.as_ptr(),
+                flags.bits() as c_int,
+            ))
+            .map(|_| ())
+        }
+    }
+}
+
 foreign_type_and_impl_send_sync! {
     type CType = ffi::TS_RESP_CTX;
     fn drop = ffi::TS_RESP_CTX_free;
@@ -269,6 +293,18 @@ foreign_type_and_impl_send_sync! {
 }
 
 impl TsRespContextRef {
+    /// Adds flags to the response context.
+    ///
+    /// Pass `ffi::TS_TSA_NAME` to include the signer certificate in responses
+    /// (equivalent to `tsa_name = yes` in an OpenSSL TSA configuration file).
+    ///
+    /// This corresponds to `TS_RESP_CTX_add_flags`.
+    pub fn add_flags(&mut self, flags: u32) {
+        unsafe {
+            ffi::TS_RESP_CTX_add_flags(self.as_ptr(), flags as c_int);
+        }
+    }
+
     /// Creates a signed timestamp response for the request.
     ///
     /// This corresponds to `TS_RESP_create_response`.
