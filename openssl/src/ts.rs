@@ -113,6 +113,20 @@ impl TsReqRef {
         to_der,
         ffi::i2d_TS_REQ
     }
+
+    /// Returns the policy OID from the request, or `None` if not set.
+    ///
+    /// This corresponds to `TS_REQ_get_policy_id`.
+    pub fn policy_id(&self) -> Option<&Asn1ObjectRef> {
+        unsafe {
+            let ptr = ffi::TS_REQ_get_policy_id(self.as_ptr());
+            if ptr.is_null() {
+                None
+            } else {
+                Some(Asn1ObjectRef::from_ptr(ptr))
+            }
+        }
+    }
 }
 
 impl TsReq {

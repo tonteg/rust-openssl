@@ -124,6 +124,7 @@ extern "C" {
 cfg_if! {
     if #[cfg(any(ossl110, libressl280))] {
         extern "C" {
+            pub fn TS_REQ_get_policy_id(a: *const TS_REQ) -> *mut ASN1_OBJECT;
             pub fn TS_REQ_set_policy_id(
                 a: *mut TS_REQ,
                 policy: *const ASN1_OBJECT
@@ -135,6 +136,7 @@ cfg_if! {
         }
     } else {
         extern "C" {
+            pub fn TS_REQ_get_policy_id(a: *mut TS_REQ) -> *mut ASN1_OBJECT;
             pub fn TS_REQ_set_policy_id(
                 a: *mut TS_REQ,
                 policy: *mut ASN1_OBJECT
