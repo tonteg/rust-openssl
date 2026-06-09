@@ -245,6 +245,15 @@ bitflags! {
     }
 }
 
+bitflags! {
+    /// Flags controlling timestamp response generation behaviour.
+    pub struct RespFlags: c_uint {
+        const TSA_NAME = ffi::TS_TSA_NAME;
+        const ORDERING = ffi::TS_ORDERING;
+        const ESS_CERT_ID_CHAIN = ffi::TS_ESS_CERT_ID_CHAIN;
+    }
+}
+
 foreign_type_and_impl_send_sync! {
     type CType = ffi::TS_VERIFY_CTX;
     fn drop = ffi::TS_VERIFY_CTX_free;
@@ -309,13 +318,15 @@ foreign_type_and_impl_send_sync! {
 impl TsRespContextRef {
     /// Adds flags to the response context.
     ///
-    /// Pass `ffi::TS_TSA_NAME` to include the signer certificate in responses
-    /// (equivalent to `tsa_name = yes` in an OpenSSL TSA configuration file).
+    /// Pass [`RespFlags::TSA_NAME`] to include the TSA name in responses,
+    /// [`RespFlags::ORDERING`] to set the ordering field to true, and
+    /// [`RespFlags::ESS_CERT_ID_CHAIN`] to include the configured certificate
+    /// chain in the ESS signing certificate attribute.
     ///
     /// This corresponds to `TS_RESP_CTX_add_flags`.
-    pub fn add_flags(&mut self, flags: u32) {
+    pub fn add_flags(&mut self, flags: RespFlags) {
         unsafe {
-            ffi::TS_RESP_CTX_add_flags(self.as_ptr(), flags as c_int);
+            ffi::TS_RESP_CTX_add_flags(self.as_ptr(), flags.bits() as c_int);
         }
     }
 

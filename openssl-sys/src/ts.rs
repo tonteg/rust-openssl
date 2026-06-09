@@ -33,14 +33,21 @@ cfg_if! {
     }
 }
 
-/// Server-side flag for `TS_RESP_CTX_add_flags`: include the signer's name
-/// (DN) in the response (equivalent to `tsa_name = yes` in an OpenSSL TSA
-/// configuration file).
+/// Server-side flag for `TS_RESP_CTX_add_flags`: include the TSA name in the
+/// response (equivalent to `tsa_name = yes` in an OpenSSL TSA configuration
+/// file).
 ///
 /// NOTE: Numerically identical to `TS_VFY_SIGNATURE` (`0x01`), which belongs
 /// to the *verify*-context flag space (`TS_VERIFY_CTX`). The two constants
 /// are unrelated and must not be used interchangeably.
 pub const TS_TSA_NAME: c_uint = 0x01;
+/// Server-side flag for `TS_RESP_CTX_add_flags`: set the ordering field to
+/// true in the response.
+pub const TS_ORDERING: c_uint = 0x02;
+/// Server-side flag for `TS_RESP_CTX_add_flags`: include the signer
+/// certificate and the other configured certificates in the ESS signing
+/// certificate attribute.
+pub const TS_ESS_CERT_ID_CHAIN: c_uint = 0x04;
 
 pub const TS_VFY_SIGNATURE: c_uint = 0x1;
 pub const TS_VFY_VERSION: c_uint = 0x2;
