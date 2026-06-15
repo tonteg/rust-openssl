@@ -113,6 +113,20 @@ impl TsReqRef {
         to_der,
         ffi::i2d_TS_REQ
     }
+
+    /// Returns the policy OID from the request, or `None` if not set.
+    ///
+    /// This corresponds to `TS_REQ_get_policy_id`.
+    pub fn policy_id(&self) -> Option<&Asn1ObjectRef> {
+        unsafe {
+            let ptr = ffi::TS_REQ_get_policy_id(self.as_ptr());
+            if ptr.is_null() {
+                None
+            } else {
+                Some(Asn1ObjectRef::from_ptr(ptr))
+            }
+        }
+    }
 }
 
 impl TsReq {
@@ -231,6 +245,15 @@ bitflags! {
     }
 }
 
+bitflags! {
+    /// Flags controlling timestamp response generation behaviour.
+    pub struct RespFlags: c_uint {
+        const TSA_NAME = ffi::TS_TSA_NAME;
+        const ORDERING = ffi::TS_ORDERING;
+        const ESS_CERT_ID_CHAIN = ffi::TS_ESS_CERT_ID_CHAIN;
+    }
+}
+
 foreign_type_and_impl_send_sync! {
     type CType = ffi::TS_VERIFY_CTX;
     fn drop = ffi::TS_VERIFY_CTX_free;
@@ -257,6 +280,30 @@ impl TsVerifyContext {
     }
 }
 
+impl TsVerifyContextRef {
+    /// Replaces the verify flags on this context.
+    ///
+    /// This corresponds to `TS_VERIFY_CTX_set_flags`.
+    ///
+    /// # Safety note
+    ///
+    /// Setting [`VerifyFlags::SIGNATURE`] (or any combined flag that includes
+    /// it, such as [`VerifyFlags::ALL_IMPRINT`] or [`VerifyFlags::ALL_DATA`])
+    /// without first configuring a trust store will cause a NULL-pointer
+    /// dereference inside OpenSSL when [`TsResp::verify`] is called. Until a
+    /// `set_store` wrapper is available in this crate, callers must not include
+    /// `SIGNATURE` in `flags`.
+    pub fn set_flags(&mut self, flags: VerifyFlags) -> Result<(), ErrorStack> {
+        unsafe {
+            cvt(ffi::TS_VERIFY_CTX_set_flags(
+                self.as_ptr(),
+                flags.bits() as c_int,
+            ))
+            .map(|_| ())
+        }
+    }
+}
+
 foreign_type_and_impl_send_sync! {
     type CType = ffi::TS_RESP_CTX;
     fn drop = ffi::TS_RESP_CTX_free;
@@ -269,6 +316,20 @@ foreign_type_and_impl_send_sync! {
 }
 
 impl TsRespContextRef {
+    /// Adds flags to the response context.
+    ///
+    /// Pass [`RespFlags::TSA_NAME`] to include the TSA name in responses,
+    /// [`RespFlags::ORDERING`] to set the ordering field to true, and
+    /// [`RespFlags::ESS_CERT_ID_CHAIN`] to include the configured certificate
+    /// chain in the ESS signing certificate attribute.
+    ///
+    /// This corresponds to `TS_RESP_CTX_add_flags`.
+    pub fn add_flags(&mut self, flags: RespFlags) {
+        unsafe {
+            ffi::TS_RESP_CTX_add_flags(self.as_ptr(), flags.bits() as c_int);
+        }
+    }
+
     /// Creates a signed timestamp response for the request.
     ///
     /// This corresponds to `TS_RESP_create_response`.

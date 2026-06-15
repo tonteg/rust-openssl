@@ -33,6 +33,22 @@ cfg_if! {
     }
 }
 
+/// Server-side flag for `TS_RESP_CTX_add_flags`: include the TSA name in the
+/// response (equivalent to `tsa_name = yes` in an OpenSSL TSA configuration
+/// file).
+///
+/// NOTE: Numerically identical to `TS_VFY_SIGNATURE` (`0x01`), which belongs
+/// to the *verify*-context flag space (`TS_VERIFY_CTX`). The two constants
+/// are unrelated and must not be used interchangeably.
+pub const TS_TSA_NAME: c_uint = 0x01;
+/// Server-side flag for `TS_RESP_CTX_add_flags`: set the ordering field to
+/// true in the response.
+pub const TS_ORDERING: c_uint = 0x02;
+/// Server-side flag for `TS_RESP_CTX_add_flags`: include the signer
+/// certificate and the other configured certificates in the ESS signing
+/// certificate attribute.
+pub const TS_ESS_CERT_ID_CHAIN: c_uint = 0x04;
+
 pub const TS_VFY_SIGNATURE: c_uint = 0x1;
 pub const TS_VFY_VERSION: c_uint = 0x2;
 pub const TS_VFY_POLICY: c_uint = 0x4;
@@ -96,6 +112,7 @@ extern "C" {
         hexstr: *mut c_uchar,
         length: c_long,
     ) -> *mut c_uchar;
+    pub fn TS_VERIFY_CTX_set_flags(ctx: *mut TS_VERIFY_CTX, flags: c_int) -> c_int;
     pub fn TS_RESP_verify_response(ctx: *mut TS_VERIFY_CTX, response: *mut TS_RESP) -> c_int;
 
     pub fn TS_REQ_to_TS_VERIFY_CTX(req: *mut TS_REQ, ctx: *mut TS_VERIFY_CTX)
@@ -106,6 +123,7 @@ extern "C" {
     pub fn TS_RESP_CTX_set_signer_cert(ctx: *mut TS_RESP_CTX, signer: *mut X509) -> c_int;
     pub fn TS_RESP_CTX_set_signer_key(ctx: *mut TS_RESP_CTX, key: *mut EVP_PKEY) -> c_int;
     pub fn TS_RESP_CTX_add_md(ctx: *mut TS_RESP_CTX, md: *const EVP_MD) -> c_int;
+    pub fn TS_RESP_CTX_add_flags(ctx: *mut TS_RESP_CTX, flags: c_int);
 
     pub fn TS_RESP_create_response(ctx: *mut TS_RESP_CTX, req_bio: *mut BIO) -> *mut TS_RESP;
 }
@@ -113,6 +131,7 @@ extern "C" {
 cfg_if! {
     if #[cfg(any(ossl110, libressl280))] {
         extern "C" {
+            pub fn TS_REQ_get_policy_id(a: *const TS_REQ) -> *mut ASN1_OBJECT;
             pub fn TS_REQ_set_policy_id(
                 a: *mut TS_REQ,
                 policy: *const ASN1_OBJECT
@@ -124,6 +143,7 @@ cfg_if! {
         }
     } else {
         extern "C" {
+            pub fn TS_REQ_get_policy_id(a: *mut TS_REQ) -> *mut ASN1_OBJECT;
             pub fn TS_REQ_set_policy_id(
                 a: *mut TS_REQ,
                 policy: *mut ASN1_OBJECT
